@@ -1,113 +1,67 @@
-# PPID Pengadilan Negeri Sukadana
+# PPID Pengadilan Negeri Sukadana — PHP + MySQL
 
-Portal resmi PPID yang dibangun sebagai **plain-local Next.js + TypeScript** starter untuk dikembangkan ke lingkungan produksi pengadilan.
+Versi proyek ini menggunakan **PHP native, HTML semantik, CSS responsif, PDO, dan MySQL**. Tidak lagi membutuhkan Node.js atau Next.js.
 
-> **Status:** UI dan alur interaksi utama sudah berfungsi sebagai demo. Data saat ini berupa data demo statis dan belum terhubung ke database atau layanan storage/email produksi.
+## Struktur
 
-## Analisis referensi & sitemap
-
-Referensi yang diberikan adalah `https://ppid.pn-prabumulih.go.id/permohonan-informasi`. Saat dianalisis pada 30 September 2026, halaman berada di balik Cloudflare sehingga struktur internalnya tidak dapat diverifikasi dari lingkungan ini. Karena itu implementasi tidak mengklaim menyalin fitur spesifik referensi; IA dan istilah mengikuti praktik umum portal PPID pengadilan serta brief yang diberikan.
-
-Sitemap tahap awal:
-
-- `/` — Beranda, CTA permohonan, cek status, informasi terkini, kontak.
-- `/informasi-publik` — pencarian, filter kategori, daftar dan tombol unduh.
-- `/berita` — kartu berita dan pengumuman.
-- `/permohonan-informasi` — formulir tiga langkah, validasi browser, upload file, persetujuan, nomor tiket, bukti cetak.
-- `/cek-status` — pencarian nomor permohonan dan timeline status.
-- `/keberatan` — pengajuan keberatan terhadap permohonan.
-- `/admin/login` — layar login petugas.
-- `/admin` — dashboard statistik, chart, dan permohonan terbaru.
-- `/admin/permohonan` — tabel, filter status dan export placeholder.
-- `/admin/settings` — identitas, kode, kontak, format nomor, batas upload.
-- `/admin/laporan` — ringkasan dan rekap status.
-
-Alur pengguna: **Pemohon → isi data → unggah identitas → kirim → nomor PPID-SKD-2026-000124 → cek timeline → (opsional) ajukan keberatan.** Alur petugas: **login → dashboard → verifikasi → ubah status → siapkan jawaban → audit/notifikasi** (bagian server-side masih roadmap).
+- `index.php` — front controller dan route publik/admin.
+- `config/config.php` — konfigurasi MySQL dan aplikasi.
+- `includes/functions.php` — PDO, escaping, CSRF, helper, fallback demo.
+- `includes/layout.php` — header/footer publik dan layout admin.
+- `assets/css/style.css` — desain responsif navy/gold.
+- `database/schema.sql` — tabel MySQL dengan foreign key dan index.
+- `database/seed.sql` — data contoh informasi publik dan berita.
+- `scripts/create_admin.php` — membuat admin dengan password hashing.
+- `storage/private` — dokumen privat, tidak boleh diakses langsung.
+- `storage/public` — dokumen publik setelah pemeriksaan akses.
 
 ## Menjalankan lokal
 
 ```bash
-npm install
-npm run dev
-# buka http://localhost:3000
+cp .env.example .env
+# export variable dari .env atau set di Apache/PHP-FPM
+mysql -u root -p < database/schema.sql
+mysql -u root -p ppid_sukadana < database/seed.sql
+php scripts/create_admin.php admin@pn-sukadana.go.id 'GantiPasswordMinimal12Karakter' 'Super Admin'
+php -S 0.0.0.0:8080
 ```
 
-## Build produksi
+Buka `http://localhost:8080`.
 
-```bash
-npm run lint
-npm run build
-npm start
-```
+Login admin berada di `index.php?page=admin-login`. Jangan memakai password demo pada produksi.
 
-## Teknologi
+## Database
 
-- Next.js 16 App Router, TypeScript, CSS responsif.
-- Route static/SSR-ready untuk halaman publik dan dashboard.
-- Bahasa antarmuka: Indonesia.
-- Identitas awal: PPID Pengadilan Negeri Sukadana.
+Tabel utama: `users`, `public_information`, `information_requests`, `request_status_histories`, `request_documents`, `objections`, `news`, dan `audit_logs`.
 
-## Pemetaan ke backend produksi
+Semua query aplikasi menggunakan PDO prepared statements. Sebelum produksi, aktifkan MySQL user khusus aplikasi dengan privilege minimum dan backup terenkripsi di luar web root.
 
-Untuk memenuhi spesifikasi produksi, tambahkan API/database dengan model berikut: `users`, `roles`, `permissions`, `information_requests`, `request_documents`, `request_status_histories`, `request_responses`, `objections`, `public_information`, `public_information_categories`, `documents`, `news`, `site_settings`, `ppid_officers`, `audit_logs`, `notifications`, dan `password_resets`.
+## URL
 
-Rekomendasi: PostgreSQL + Prisma, session cookie httpOnly, Argon2/bcrypt, Zod validation, object storage private/public terpisah, signed download URL, rate limiting, Cloudflare Turnstile, SMTP provider, dan audit log append-only. NIK, dokumen identitas, alamat dan kontak wajib dienkripsi/ditutup pada tampilan publik. Jangan menyimpan file privat di `public/`.
+Pretty URL dapat dipakai setelah Apache/Nginx mengarahkan seluruh request ke `index.php`. Tanpa rewrite, gunakan query route:
 
-### Environment produksi (contoh)
+- `index.php?page=info`
+- `index.php?page=request`
+- `index.php?page=status&number=PPID-SKD-2026-000124`
+- `index.php?page=objection`
+- `index.php?page=admin-login`
+- `index.php?page=admin`
+- `index.php?page=admin-requests`
+- `index.php?page=admin-settings`
+- `index.php?page=admin-reports`
 
-Salin `.env.example` menjadi `.env.local` dan isi hanya pada server/secret manager:
+## Keamanan
 
-```text
-DATABASE_URL=
-SESSION_SECRET=
-SMTP_HOST=
-SMTP_PORT=587
-SMTP_USER=
-SMTP_PASSWORD=
-TURNSTILE_SECRET_KEY=
-STORAGE_ENDPOINT=
-STORAGE_ACCESS_KEY=
-STORAGE_SECRET_KEY=
-STORAGE_BUCKET_PUBLIC=
-STORAGE_BUCKET_PRIVATE=
-PUBLIC_SITE_URL=https://ppid.pn-sukadana.go.id
-```
+- Password admin menggunakan `password_hash()` dan `password_verify()`.
+- Form POST memakai token CSRF.
+- Output di-escape dengan `htmlspecialchars`.
+- Query memakai prepared statements.
+- Dokumen privat ditempatkan di `storage/private` dan tidak boleh dilayani sebagai file publik.
+- Upload produksi wajib menambah pemeriksaan MIME server-side, sanitasi nama, batas ukuran, antivirus, dan download melalui endpoint terautentikasi.
+- Tambahkan HTTPS, secure/httpOnly/SameSite session cookie, rate limit login, timeout session, Turnstile, audit log lengkap, dan backup database.
 
-Mekanisme **Create Initial Admin** yang direkomendasikan: CLI satu kali yang membaca `INITIAL_ADMIN_EMAIL` dan password dari secret manager, memaksa pergantian password pertama kali, lalu menghapus/menonaktifkan secret bootstrap.
+## Status implementasi
 
-## Deployment Linux/VPS
+Sudah tersedia: portal publik, informasi publik, berita, form permohonan MySQL, nomor permohonan, cek status, keberatan, login admin, dashboard, daftar permohonan, settings demo, laporan, schema, seed, dan create-admin CLI.
 
-1. Siapkan Node.js LTS, PostgreSQL, reverse proxy Nginx/Caddy, TLS dan object storage.
-2. Set seluruh environment variable di secret manager/server, bukan di Git.
-3. `npm ci && npm run build`.
-4. Jalankan `npm start` di systemd/PM2, proxy HTTPS ke port aplikasi.
-5. Jalankan migration Prisma dan seed demo hanya pada environment demo.
-6. Backup database terjadwal terenkripsi di luar folder publik; backup object storage privat terpisah.
-
-## Seed dan demo
-
-Data yang terlihat di UI ditandai `DATA DEMO` pada admin. Sebelum produksi, ganti data contoh, identitas, alamat, dasar hukum, persyaratan, biaya dan SLA setelah diverifikasi pihak Pengadilan. Jangan mengarang atau mempublikasikan dasar hukum/prosedur yang belum disahkan.
-
-## Penggantian identitas pengadilan
-
-Ubah nilai default pada `components/portal.tsx`, `components/admin.tsx`, metadata di `app/layout.tsx`, dan konfigurasi backend/CMS saat sudah tersedia. Versi produksi sebaiknya memindahkan seluruh identitas ke tabel `site_settings` dan mengeditnya melalui `/admin/settings`, termasuk logo, kontak, Google Maps, format nomor, batas upload, footer, pejabat PPID dan template notifikasi.
-
-## Fitur yang sudah berfungsi di starter ini
-
-- Homepage resmi responsif dengan navigasi desktop/mobile.
-- Informasi publik: search, filter kategori, tabel, unduh demo.
-- Berita, kontak, profile/CTA.
-- Form permohonan 3 langkah, validasi required/type/email, file picker, persetujuan, nomor tiket demo, salin, cetak.
-- Cek status dengan timeline demo.
-- Form keberatan dengan nomor tiket demo.
-- Admin login demo, dashboard, statistik, chart, daftar permohonan, filter, settings form, laporan.
-- Metadata dasar SEO, `sitemap.xml`, `robots.txt`, semantic labels, focus states, responsive mobile table.
-
-## Belum selesai / harus dikerjakan sebelum produksi
-
-- Persistensi PostgreSQL/Prisma dan API server.
-- Session auth, RBAC granular, password reset, rate limit, CSRF, Turnstile.
-- Validasi MIME server-side, virus scan, private object storage dan signed downloads.
-- Email/SMS notifications, response documents, audit log append-only, export XLSX/PDF/CSV nyata.
-- CMS CRUD penuh untuk berita, informasi, dokumen, pengguna dan settings.
-- Penetapan konten hukum, SLA, biaya, persyaratan dan branding final oleh Pengadilan.
+Sebelum produksi: email notification, upload persistence ke `request_documents`, CRUD CMS lengkap, perubahan status dari admin, response documents, export CSV/PDF/Excel, RBAC granular, reset password, storage object privat, dan konten resmi yang diverifikasi Pengadilan.

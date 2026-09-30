@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 $config = require __DIR__ . '/../config/config.php';
-function db(): ?PDO { static $pdo = null; global $config; if ($pdo instanceof PDO) return $pdo; try { $dsn = "mysql:host={$config['db']['host']};port={$config['db']['port']};dbname={$config['db']['name']};charset=utf8mb4"; $pdo = new PDO($dsn, $config['db']['user'], $config['db']['pass'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]); return $pdo; } catch (Throwable $e) { return null; } }
+function db(): ?PDO { static $pdo = null; static $error = null; global $config; if ($pdo instanceof PDO) return $pdo; if ($error instanceof Throwable) return null; try { $dsn = "mysql:host={$config['db']['host']};port={$config['db']['port']};dbname={$config['db']['name']};charset=utf8mb4"; $pdo = new PDO($dsn, $config['db']['user'], $config['db']['pass'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_EMULATE_PREPARES => false]); return $pdo; } catch (Throwable $e) { $error = $e; error_log('[PPID DB] ' . $e->getMessage()); return null; } }
 function e(mixed $value): string { return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8'); }
 function url(string $page = 'home', array $params = []): string { return 'index.php?' . http_build_query(array_merge(['page' => $page], $params)); }
 function redirect(string $page, array $params = []): never { header('Location: ' . url($page, $params)); exit; }
@@ -33,3 +33,5 @@ function captcha_widget(): string {
   return '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script><div class="cf-turnstile" data-sitekey="'.$site.'"></div><input type="text" name="website" class="hp" tabindex="-1" autocomplete="off">';
 }
 function admin_required(): void { if (empty($_SESSION['admin_id'])) redirect('admin-login'); }
+
+function db_error_hint(): string { return 'Koneksi database belum tersedia. Periksa DB_HOST, DB_NAME, DB_USER, DB_PASS, privilege user, dan import database/schema.sql.'; }

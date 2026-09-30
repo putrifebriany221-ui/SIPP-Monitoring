@@ -86,3 +86,23 @@ TURNSTILE_SECRET_KEY=secret-key-dari-cloudflare
 ```
 
 `TURNSTILE_SECRET_KEY` hanya boleh berada di server dan tidak boleh masuk ke HTML, Git, atau ZIP publik. Server melakukan verifikasi ke endpoint resmi Cloudflare sebelum menyimpan data. Saat key belum diisi pada development, form memakai honeypot anti-spam agar preview tetap bisa digunakan; **sebelum produksi wajib mengisi kedua key Turnstile**.
+
+## 9. Jika admin tidak bisa login
+
+Jalankan dari SSH pada folder project:
+
+```bash
+php scripts/check_hosting.php
+```
+
+Semua baris idealnya berstatus `[OK]`. Jika `MySQL connection` gagal, koreksi nilai `DB_HOST`, `DB_NAME`, `DB_USER`, dan `DB_PASS`. Pada cPanel, nama database dan user sering otomatis diberi prefix akun, misalnya `akun_ppid_sukadana`, bukan hanya `ppid_sukadana`.
+
+Jika koneksi berhasil tetapi `Admin users` bernilai `0`, buat admin:
+
+```bash
+php scripts/create_admin.php admin@domain-anda.go.id 'Password-kuat-minimal-12-karakter' 'Super Admin'
+```
+
+Jika tidak ada SSH, minta administrator hosting menjalankan command tersebut. Jangan membuat hash password secara manual dan jangan memasukkan password ke file PHP.
+
+Versi ini membaca file `.env` secara langsung, sehingga file `.env` harus berada satu folder dengan `index.php`, bukan di dalam `config/`. Pastikan nama file benar-benar `.env`, bukan `.env.txt`. Setelah perubahan konfigurasi, hapus cookie/session browser lalu buka halaman login kembali.

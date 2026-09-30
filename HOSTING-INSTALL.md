@@ -75,3 +75,14 @@ Lakukan satu pengajuan demo dan pastikan record tersimpan di tabel `information_
 ## 7. Keamanan sebelum produksi
 
 Aktifkan HTTPS, ubah `SESSION_SECRET`, ganti password admin, hapus data demo yang tidak diperlukan, dan verifikasi seluruh dasar hukum, persyaratan, biaya, SLA, identitas, alamat, email, serta kontak resmi Pengadilan. Jangan membuka akses publik ke backup database, `.env`, file SQL, dokumen KTP, atau folder privat.
+
+## 8. CAPTCHA / anti-spam
+
+Form Permohonan Informasi dan Pengajuan Keberatan menggunakan **Cloudflare Turnstile** bila key sudah dikonfigurasi. Buat widget pada Cloudflare Turnstile, lalu set environment variable berikut pada hosting:
+
+```text
+TURNSTILE_SITE_KEY=site-key-dari-cloudflare
+TURNSTILE_SECRET_KEY=secret-key-dari-cloudflare
+```
+
+`TURNSTILE_SECRET_KEY` hanya boleh berada di server dan tidak boleh masuk ke HTML, Git, atau ZIP publik. Server melakukan verifikasi ke endpoint resmi Cloudflare sebelum menyimpan data. Saat key belum diisi pada development, form memakai honeypot anti-spam agar preview tetap bisa digunakan; **sebelum produksi wajib mengisi kedua key Turnstile**.

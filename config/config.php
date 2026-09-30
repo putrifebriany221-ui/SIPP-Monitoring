@@ -9,4 +9,5 @@ return [
   'db' => ['host' => $env('DB_HOST', '127.0.0.1'), 'port' => $env('DB_PORT', '3306'), 'name' => $env('DB_NAME', 'ppid_sukadana'), 'user' => $env('DB_USER', 'root'), 'pass' => $env('DB_PASS', '')],
   'base_url' => rtrim($env('APP_URL', 'http://localhost:8080'), '/'),
   'session_secret' => $env('SESSION_SECRET', 'change-this-before-production'),
+  'captcha' => ['site_key' => $env('TURNSTILE_SITE_KEY', ''), 'secret_key' => $env('TURNSTILE_SECRET_KEY', '')],
 ];

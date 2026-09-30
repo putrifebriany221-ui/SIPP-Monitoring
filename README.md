@@ -65,3 +65,7 @@ Pretty URL dapat dipakai setelah Apache/Nginx mengarahkan seluruh request ke `in
 Sudah tersedia: portal publik, informasi publik, berita, form permohonan MySQL, nomor permohonan, cek status, keberatan, login admin, dashboard, daftar permohonan, settings demo, laporan, schema, seed, dan create-admin CLI.
 
 Sebelum produksi: email notification, upload persistence ke `request_documents`, CRUD CMS lengkap, perubahan status dari admin, response documents, export CSV/PDF/Excel, RBAC granular, reset password, storage object privat, dan konten resmi yang diverifikasi Pengadilan.
+
+## CAPTCHA dan anti-spam
+
+Form permohonan dan keberatan sudah memiliki integrasi Cloudflare Turnstile server-side. Isi `TURNSTILE_SITE_KEY` dan `TURNSTILE_SECRET_KEY` pada environment hosting. Secret key diverifikasi melalui endpoint Cloudflare dan tidak pernah dikirim ke browser. Saat key kosong, mode lokal hanya menggunakan honeypot fallback; mode tersebut tidak cukup untuk produksi.

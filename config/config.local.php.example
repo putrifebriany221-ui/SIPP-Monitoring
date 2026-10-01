@@ -1,0 +1,18 @@
+<?php
+// Salin file ini menjadi config.local.php lalu isi sesuai cPanel.
+// Jangan commit atau membagikan config.local.php karena berisi password database.
+return [
+    'app_url' => 'https://domain-anda.go.id',
+    'db' => [
+        'host' => 'localhost',
+        'port' => '3306',
+        'name' => 'USERNAME_CPANEL_nama_database',
+        'user' => 'USERNAME_CPANEL_nama_user',
+        'pass' => 'PASSWORD_DATABASE',
+    ],
+    'session_secret' => 'GANTI_DENGAN_STRING_ACAK_MINIMAL_32_KARAKTER',
+    'captcha' => [
+        'site_key' => 'TURNSTILE_SITE_KEY',
+        'secret_key' => 'TURNSTILE_SECRET_KEY',
+    ],
+];

@@ -1,108 +1,35 @@
-# Panduan Instalasi Manual di Hosting
 
-## 1. Upload file
 
-Upload seluruh isi arsip project ke document root hosting, biasanya `public_html/`. Struktur `index.php`, `.htaccess`, `assets/`, `config/`, `includes/`, `database/`, `scripts/`, dan `storage/` harus tetap dipertahankan.
+## 10. Mode khusus cPanel tanpa SSH
 
-Jika hosting mengizinkan document root di luar `public_html`, lebih aman letakkan `storage/private/` di luar document root. Jika tidak memungkinkan, pastikan aturan server memblokir akses langsung ke folder tersebut.
+Paket ini dapat dipasang tanpa Node.js dan tanpa Composer. Gunakan **PHP 8.1 atau lebih baru** pada menu **MultiPHP Manager** atau **Select PHP Version**.
 
-## 2. Buat database MySQL
+Upload ZIP ke `public_html` melalui File Manager, lalu pilih **Extract**. Pastikan `index.php` berada langsung di `public_html`, bukan di dalam folder ZIP tambahan.
 
-Melalui cPanel atau panel hosting, buat:
-
-- database MySQL;
-- user MySQL;
-- password user;
-- privilege penuh user tersebut ke database.
-
-Buka phpMyAdmin, pilih database, lalu import `database/schema.sql` dan setelah itu `database/seed.sql`.
-
-## 3. Atur konfigurasi
-
-Buat environment variable melalui panel hosting jika tersedia. Jika hosting hanya menyediakan file konfigurasi, salin `.env.example` menjadi `.env` dan isi:
+Pada menu **MySQL Databases**, buat database dan user. Catat nama lengkap dengan prefix cPanel. Contoh:
 
 ```text
-APP_URL=https://domain-anda.go.id
-DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=nama_database
-DB_USER=nama_user
-DB_PASS=password_database
-SESSION_SECRET=string-acak-panjang
+Database: akun123_ppid
+User:     akun123_ppiduser
 ```
 
-Pada sebagian shared hosting, environment variable PHP tidak otomatis membaca file `.env`. Untuk kondisi tersebut, isi nilai database pada `config/config.php` melalui mekanisme konfigurasi hosting yang aman, dan jangan mengunggah file berisi password ke repository publik.
+Import `database/schema.sql` melalui phpMyAdmin. Setelah itu pilih database yang sama dan import `database/seed.sql`.
 
-## 4. Atur PHP
+Di File Manager, salin `config/config.local.php.example` menjadi `config/config.local.php`, lalu edit isinya:
 
-Gunakan PHP 8.1 atau lebih baru dan aktifkan ekstensi:
-
-- `pdo_mysql`;
-- `mbstring`;
-- `fileinfo`.
-
-Pastikan folder `storage/private/` dan `storage/public/` dapat ditulis oleh PHP, tetapi tidak dapat mengeksekusi script.
-
-## 5. Buat admin awal
-
-Jika hosting menyediakan SSH:
-
-```bash
-php scripts/create_admin.php admin@domain-anda.go.id 'Password-kuat-minimal-12-karakter' 'Super Admin'
+```php
+'app_url' => 'https://domain-anda.go.id',
+'db' => [
+    'host' => 'localhost',
+    'port' => '3306',
+    'name' => 'akun123_ppid',
+    'user' => 'akun123_ppiduser',
+    'pass' => 'password-database',
+],
 ```
 
-Jika tidak ada SSH, buat admin melalui script lokal/CLI yang aman atau minta administrator hosting menjalankan command tersebut. Jangan menaruh password admin di source code.
+Isi `session_secret` dengan string acak panjang dan isi key Cloudflare Turnstile. File `config/config.local.php` sudah diblokir oleh `.htaccess` dan tidak boleh dibagikan.
 
-Login tersedia melalui:
+Jika tidak tersedia SSH, buat akun admin dengan cara berikut: buat hash password menggunakan PHP CLI di komputer lokal atau minta administrator hosting menjalankan `php scripts/create_admin.php`. Jangan membuat atau mengunggah file PHP sementara yang mencetak password/hash ke browser.
 
-```text
-https://domain-anda.go.id/index.php?page=admin-login
-```
-
-## 6. Pengujian setelah upload
-
-Periksa halaman berikut:
-
-- `/index.php`
-- `/index.php?page=info`
-- `/index.php?page=request`
-- `/index.php?page=status`
-- `/index.php?page=objection`
-- `/index.php?page=admin-login`
-
-Lakukan satu pengajuan demo dan pastikan record tersimpan di tabel `information_requests`.
-
-## 7. Keamanan sebelum produksi
-
-Aktifkan HTTPS, ubah `SESSION_SECRET`, ganti password admin, hapus data demo yang tidak diperlukan, dan verifikasi seluruh dasar hukum, persyaratan, biaya, SLA, identitas, alamat, email, serta kontak resmi Pengadilan. Jangan membuka akses publik ke backup database, `.env`, file SQL, dokumen KTP, atau folder privat.
-
-## 8. CAPTCHA / anti-spam
-
-Form Permohonan Informasi dan Pengajuan Keberatan menggunakan **Cloudflare Turnstile** bila key sudah dikonfigurasi. Buat widget pada Cloudflare Turnstile, lalu set environment variable berikut pada hosting:
-
-```text
-TURNSTILE_SITE_KEY=site-key-dari-cloudflare
-TURNSTILE_SECRET_KEY=secret-key-dari-cloudflare
-```
-
-`TURNSTILE_SECRET_KEY` hanya boleh berada di server dan tidak boleh masuk ke HTML, Git, atau ZIP publik. Server melakukan verifikasi ke endpoint resmi Cloudflare sebelum menyimpan data. Saat key belum diisi pada development, form memakai honeypot anti-spam agar preview tetap bisa digunakan; **sebelum produksi wajib mengisi kedua key Turnstile**.
-
-## 9. Jika admin tidak bisa login
-
-Jalankan dari SSH pada folder project:
-
-```bash
-php scripts/check_hosting.php
-```
-
-Semua baris idealnya berstatus `[OK]`. Jika `MySQL connection` gagal, koreksi nilai `DB_HOST`, `DB_NAME`, `DB_USER`, dan `DB_PASS`. Pada cPanel, nama database dan user sering otomatis diberi prefix akun, misalnya `akun_ppid_sukadana`, bukan hanya `ppid_sukadana`.
-
-Jika koneksi berhasil tetapi `Admin users` bernilai `0`, buat admin:
-
-```bash
-php scripts/create_admin.php admin@domain-anda.go.id 'Password-kuat-minimal-12-karakter' 'Super Admin'
-```
-
-Jika tidak ada SSH, minta administrator hosting menjalankan command tersebut. Jangan membuat hash password secara manual dan jangan memasukkan password ke file PHP.
-
-Versi ini membaca file `.env` secara langsung, sehingga file `.env` harus berada satu folder dengan `index.php`, bukan di dalam `config/`. Pastikan nama file benar-benar `.env`, bukan `.env.txt`. Setelah perubahan konfigurasi, hapus cookie/session browser lalu buka halaman login kembali.
+Setelah upload, buka `https://domain-anda.go.id/index.php?page=admin-login`. Jika gagal, periksa `error_log` cPanel dan jalankan `php scripts/check_hosting.php` bila SSH tersedia. Hapus cache browser dan cookie lama setelah mengganti domain atau HTTPS.

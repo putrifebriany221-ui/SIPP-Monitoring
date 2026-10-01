@@ -1,6 +1,19 @@
 RewriteEngine On
+
+# Semua request aplikasi diarahkan ke front controller.
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ index.php [L,QSA]
+
+DirectoryIndex index.php
 Options -Indexes
-<FilesMatch "\.(env|sql|log)$">Require all denied</FilesMatch>
+
+# Folder internal tidak boleh diakses melalui browser.
+RewriteRule ^(?:config|database|includes|scripts|storage/private)(?:/|$) - [F,L,NC]
+
+# File rahasia dan konfigurasi lokal wajib ditolak.
+<FilesMatch "^(?:\.env|config\.local\.php|.*\.sql|.*\.log)$">
+    Require all denied
+</FilesMatch>
+
+# Untuk folder upload, gunakan permissions non-executable pada cPanel.

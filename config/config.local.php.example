@@ -11,6 +11,7 @@ return [
         'pass' => 'PASSWORD_DATABASE',
     ],
     'session_secret' => 'GANTI_DENGAN_STRING_ACAK_MINIMAL_32_KARAKTER',
+    'setup_key' => 'GANTI_SETUP_KEY_SEKALI_PAKAI_DENGAN_STRING_ACAK',
     'captcha' => [
         'site_key' => 'TURNSTILE_SITE_KEY',
         'secret_key' => 'TURNSTILE_SECRET_KEY',

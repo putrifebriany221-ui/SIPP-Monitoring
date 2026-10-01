@@ -30,5 +30,6 @@ return [
   'db' => ['host' => (string)($localDb['host'] ?? $env('DB_HOST', '127.0.0.1')), 'port' => (string)($localDb['port'] ?? $env('DB_PORT', '3306')), 'name' => (string)($localDb['name'] ?? $env('DB_NAME', 'ppid_sukadana')), 'user' => (string)($localDb['user'] ?? $env('DB_USER', 'root')), 'pass' => (string)($localDb['pass'] ?? $env('DB_PASS', ''))],
   'base_url' => rtrim((string)($localConfig['app_url'] ?? $env('APP_URL', 'http://localhost:8080')), '/'),
   'session_secret' => (string)($localConfig['session_secret'] ?? $env('SESSION_SECRET', 'change-this-before-production')),
+  'setup_key' => (string)($localConfig['setup_key'] ?? $env('SETUP_KEY', '')),
   'captcha' => ['site_key' => (string)($localCaptcha['site_key'] ?? $env('TURNSTILE_SITE_KEY', '')), 'secret_key' => (string)($localCaptcha['secret_key'] ?? $env('TURNSTILE_SECRET_KEY', ''))],
 ];

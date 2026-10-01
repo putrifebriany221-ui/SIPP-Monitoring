@@ -33,3 +33,19 @@ Isi `session_secret` dengan string acak panjang dan isi key Cloudflare Turnstile
 Jika tidak tersedia SSH, buat akun admin dengan cara berikut: buat hash password menggunakan PHP CLI di komputer lokal atau minta administrator hosting menjalankan `php scripts/create_admin.php`. Jangan membuat atau mengunggah file PHP sementara yang mencetak password/hash ke browser.
 
 Setelah upload, buka `https://domain-anda.go.id/index.php?page=admin-login`. Jika gagal, periksa `error_log` cPanel dan jalankan `php scripts/check_hosting.php` bila SSH tersedia. Hapus cache browser dan cookie lama setelah mengganti domain atau HTTPS.
+
+
+## 11. Membuat admin tanpa SSH
+
+Gunakan wizard browser satu kali:
+
+1. Pada File Manager, salin `config/config.local.php.example` menjadi `config/config.local.php`.
+2. Isi koneksi database dan ubah `setup_key` menjadi string acak panjang, misalnya gabungan 32–64 karakter.
+3. Upload file `setup-admin.php` dari paket ini ke folder yang sama dengan `index.php`.
+4. Buka `https://domain-anda.go.id/setup-admin.php`.
+5. Masukkan setup key, nama, email, dan password admin minimal 12 karakter.
+6. Setelah pesan berhasil muncul, hapus `setup-admin.php` melalui File Manager.
+7. Hapus baris `setup_key` dari `config/config.local.php` atau ubah nilainya menjadi kosong.
+8. Login di `index.php?page=admin-login`.
+
+Wizard akan menolak akses jika `setup_key` belum dikonfigurasi. Jangan meninggalkan file wizard atau setup key di hosting setelah admin dibuat.
